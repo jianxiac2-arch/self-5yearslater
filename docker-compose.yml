@@ -1,0 +1,23 @@
+services:
+  backend:
+    build: ./backend
+    container_name: 5yl-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      # 记忆库数据落盘到本地，便于备份/迁移，保证隐私
+      - ./backend/data:/app/data
+    env_file:
+      - ./backend/.env
+    environment:
+      - HF_ENDPOINT=https://hf-mirror.com
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: 5yl-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    restart: unless-stopped

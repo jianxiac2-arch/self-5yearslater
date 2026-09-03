@@ -251,6 +251,136 @@ input, textarea {
   font-size: 20px;
 }
 
+/* ===== 引导提问 chips ===== */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin: 20px auto 0;
+  max-width: 560px;
+}
+
+.chip {
+  padding: 8px 14px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  transition: all 0.15s;
+  box-shadow: var(--shadow-sm);
+}
+
+.chip:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary-dark);
+  background: var(--color-primary-light);
+}
+
+.chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.reset-demo {
+  margin-top: 28px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.reset-demo:hover {
+  color: var(--color-primary-dark);
+}
+
+/* ===== 访问口令门 ===== */
+.gate-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg);
+  padding: 24px;
+}
+
+.gate-card {
+  width: 100%;
+  max-width: 380px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 32px 28px;
+  text-align: center;
+}
+
+.gate-logo {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.gate-desc {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-bottom: 20px;
+  line-height: 1.7;
+}
+
+.gate-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  outline: none;
+  text-align: center;
+  background: var(--color-surface-alt);
+  color: var(--color-text);
+}
+
+.gate-input:focus {
+  border-color: var(--color-primary);
+  background: var(--color-surface);
+}
+
+.gate-error {
+  color: var(--color-danger);
+  font-size: 13px;
+  margin-top: 10px;
+}
+
+.gate-btn {
+  width: 100%;
+  margin-top: 16px;
+  padding: 12px;
+  background: var(--color-primary);
+  color: #fff;
+  border-radius: var(--radius);
+  font-weight: 600;
+  transition: background 0.15s;
+}
+
+.gate-btn:hover {
+  background: var(--color-primary-dark);
+}
+
+.gate-btn:disabled {
+  background: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+.gate-loading {
+  color: var(--color-text-muted);
+  font-size: 14px;
+}
+
 /* ===== 记忆库 / 搜索页 通用 ===== */
 .manage-page {
   max-width: 900px;

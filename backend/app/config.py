@@ -35,6 +35,13 @@ class Settings(BaseSettings):
     port: int = 8000
     frontend_origin: str = "http://localhost:5173"
 
+    # --- 公网部署 ---
+    # 访问口令：设为非空后，所有 /api 请求（除 /api/auth/status）需带 X-Access-Code 头。
+    # 本地开发留空即不启用。
+    access_code: str = ""
+    # 演示数据：设为 true 时，启动种子脚本会写入半虚拟演示人格（公网 demo 用）。
+    seed_demo_data: bool = False
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

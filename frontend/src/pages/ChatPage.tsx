@@ -1,13 +1,22 @@
 import { useEffect, useRef, useState } from 'react'
-import { chatStream } from '../api'
+import { chatStream, resetDemoData } from '../api'
 
 type Msg = { role: 'user' | 'ai'; content: string }
+
+// 引导提问：让首次访问的评审在 2 分钟内撞到核心卖点（反谄媚 / 记忆 / 5 年视角）
+const SUGGESTED = [
+  '我觉得研究生期间实习没用，专心发论文才是正道',
+  '秋招快开始了，我 C 端基本功不扎实，越想越焦虑',
+  '我适合冲大厂 AI 产品岗，还是走稳妥路线？',
+  '复盘一下：我最近反复在纠结什么？',
+]
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<Msg[]>([])
   const [input, setInput] = useState('')
   const [convId, setConvId] = useState<string | null>(null)
   const [streaming, setStreaming] = useState(false)
+  const [resetting, setResetting] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
@@ -15,8 +24,8 @@ export default function ChatPage() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const send = async () => {
-    const text = input.trim()
+  const send = async (preset?: string) => {
+    const text = (preset ?? input).trim()
     if (!text || streaming) return
     setInput('')
     setMessages((prev) => [...prev, { role: 'user', content: text }, { role: 'ai', content: '' }])
@@ -59,13 +68,35 @@ export default function ChatPage() {
     }
   }
 
+  const onResetDemo = async () => {
+    if (resetting) return
+    setResetting(true)
+    try {
+      await resetDemoData()
+      window.location.reload()
+    } catch {
+      alert('重置失败：本实例可能未启用演示数据')
+      setResetting(false)
+    }
+  }
+
   return (
     <div className="chat-page">
       <div className="chat-messages">
         {messages.length === 0 && (
           <div className="empty-hint">
             <h2>和「5 年后的我」聊聊</h2>
-            <p>这里不是附和你的对话框，是一个更成熟的视角。<br />讲讲你最近在纠结什么。</p>
+            <p>这里不是附和你的对话框，是一个更成熟的视角。<br />讲讲你最近在纠结什么，或试试下面的话题：</p>
+            <div className="chips">
+              {SUGGESTED.map((s) => (
+                <button key={s} className="chip" onClick={() => void send(s)} disabled={streaming}>
+                  {s}
+                </button>
+              ))}
+            </div>
+            <button className="reset-demo" onClick={onResetDemo} disabled={resetting}>
+              {resetting ? '重置中…' : '↺ 恢复演示数据（清空本次聊天记录）'}
+            </button>
           </div>
         )}
         {messages.map((m, i) => (
@@ -89,7 +120,7 @@ export default function ChatPage() {
             onKeyDown={onKeyDown}
             rows={1}
           />
-          <button className="btn-send" onClick={send} disabled={streaming || !input.trim()}>
+          <button className="btn-send" onClick={() => void send()} disabled={streaming || !input.trim()}>
             {streaming ? '生成中…' : '发送'}
           </button>
         </div>

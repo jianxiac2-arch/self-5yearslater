@@ -2,9 +2,12 @@ fastapi>=0.110
 uvicorn[standard]>=0.29
 openai>=1.40
 chromadb>=0.5
-sentence-transformers>=3.0
 pydantic>=2.7
 pydantic-settings>=2.3
 python-dotenv>=1.0
 httpx>=0.27
 requests>=2.31
+
+# 注意：本地 BGE embedding 模型依赖 sentence-transformers（含 torch，约 2GB），
+# 生产环境用 DeepSeek Embedding API，不需要它。
+# 本地开发请安装：pip install -r requirements-local.txt

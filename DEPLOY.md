@@ -44,7 +44,15 @@ EMBEDDING_API_MODEL         text-embedding-v1
 DB_PATH                     /data/memory.db
 CHROMA_PATH                 /data/chroma
 FRONTEND_ORIGIN             https://你的vercel域名.vercel.app
+ACCESS_CODE                 你设定的访问口令（如 5yl-demo-2026）
+SEED_DEMO_DATA              true
 ```
+
+**两个公网必填项**：
+- `ACCESS_CODE`：防止陌生人拿到链接后盗用你的 DeepSeek 额度、读写记忆库。前端打开时需输入同一口令（口令写进简历/GitHub README，如"访问口令：5yl-demo-2026"）。
+- `SEED_DEMO_DATA=true`：首次部署自动写入虚构演示人格（秋招求职者「小林」，仅职业/学业向），评审打开即有记忆和画像效果，不会看到空白应用。对话页底部可"恢复演示数据"一键清空访客内容。
+
+> 成本提示：Railway 已无永久免费层，新账户有试用额度，之后 Hobby 计划约 $5/月；Vercel 免费额度足够；DeepSeek API 费用极低（演示用量每月几毛到几元人民币）。
 
 ### 5. 部署
 
@@ -99,10 +107,14 @@ dist/assets/index-CvZ46_a_.js   204.02 kB
 
 ## 三、验证
 
-1. 访问 Vercel 前端 URL
-2. 发一条消息，确认 AI 能正常回复
-3. 打开记忆库页，确认没有报错
-4. 打开搜索总结页，确认能正常搜索
+1. 访问 Vercel 前端 URL，应出现访问口令页；输入 `ACCESS_CODE` 后进入
+2. 发一条消息（或点引导话题），确认 AI 能正常流式回复
+3. 打开记忆库页，应能看到预置的演示人格（画像/事实/反思）
+4. 打开搜索总结页，搜"秋招"或"焦虑"，确认能召回演示记忆
+5. 不点口令直接访问后端 API（如 `/api/memory/profile`）应返回 401
+6. 对话页点"恢复演示数据"，页面刷新后记忆库回到初始状态
+
+**建议同时录一条 1-2 分钟的演示视频备用**（录屏：输入口令 → 点"实习没用"话题展示反谄媚 → 记忆库页展示分层记忆 → 搜索总结）。简历放"在线 Demo + 口令 + 视频链接"，评审只有 2 分钟时视频比裸链接更稳。
 
 ---
 

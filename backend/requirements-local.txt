@@ -1,0 +1,5 @@
+# 本地开发依赖：在生产依赖基础上加本地 BGE embedding 模型（sentence-transformers + torch，约 2GB）。
+# 用法：pip install -r requirements-local.txt
+# 生产部署（Railway/Docker 云端）只需 requirements.txt + DeepSeek Embedding API。
+-r requirements.txt
+sentence-transformers>=3.0

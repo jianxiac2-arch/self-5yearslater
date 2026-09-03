@@ -66,7 +66,8 @@ cp .env.example backend/.env
 
 # 3. 启动后端
 cd backend
-pip install -r requirements.txt
+pip install -r requirements-local.txt   # 本地用 BGE 本地 embedding（含 sentence-transformers）
+                                        # 若本地也走 DeepSeek Embedding API，可改装 requirements.txt
 python -m app.seed          # 初始化认知框架
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 
@@ -155,14 +156,15 @@ System prompt 的核心规则：
 |----------|-----------|
 | Agent 的性格/语气/立场 | `backend/app/prompts/system.py` |
 | 思维工具/视角内容 | `backend/app/prompts/frameworks.py` |
+| 演示人格内容 | `backend/app/seed.py`（`DEMO_PROFILE` / `DEMO_FACTS`） |
 | 浅绿主题颜色 | `frontend/src/index.css` 顶部 CSS 变量 |
-| 模型/API Key | `backend/.env` |
+| 模型/API Key/访问口令/演示开关 | `backend/.env`（`ACCESS_CODE`、`SEED_DEMO_DATA`） |
 
-## 🔒 隐私说明
+## 🔒 隐私与访问控制
 
-- 所有记忆数据（SQLite + ChromaDB）存储在本地，不对外上传
-- Docker 部署时通过 volume 挂载确保数据持久化
-- 生产部署用 Railway Volume 持久化数据
+- **存储**：所有记忆数据（SQLite + ChromaDB）存储在本地或你自己的服务器（Docker/Railway Volume 持久化），不经过任何第三方数据库
+- **推理**：对话推理调用云端大模型 API（如 DeepSeek），组装上下文时必要的画像/事实会发送至模型服务商；生产环境 embedding 同样可走 API
+- **公网演示**：部署到公网时通过 `ACCESS_CODE` 环境变量设置访问口令，防止陌生人盗用 API 额度或读写记忆库；`SEED_DEMO_DATA=true` 时使用虚构演示人格，不含真实隐私
 
 ## 📄 License
 

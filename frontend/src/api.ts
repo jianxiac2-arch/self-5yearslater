@@ -109,7 +109,8 @@ export async function getMessages(conversationId: string) {
 
 // ===== L1 用户画像 =====
 
-export async function getProfile(): Promise<Record<string, any>> {
+export type ProfileEntry = { key: string; value: string; confidence?: number; source?: string; updated_at?: string }
+export async function getProfile(): Promise<Record<string, ProfileEntry>> {
   const r = await apiFetch(`${BASE}/memory/profile`);
   return r.json();
 }

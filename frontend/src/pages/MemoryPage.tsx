@@ -6,7 +6,8 @@ import {
   listEpisodes, listReflections, listFrameworks,
 } from '../api'
 
-type Profile = Record<string, any>
+type ProfileEntry = { key: string; value: string; confidence?: number; source?: string; updated_at?: string }
+type Profile = Record<string, ProfileEntry>
 type FactItem = { id: string; category: string; content: string; importance: number }
 type PrefItem = { id: string; type: string; content: string; importance: number }
 type Episode = { id: string; summary: string; occurred_at?: string }
@@ -120,8 +121,11 @@ export default function MemoryPage() {
   }
 
   // 画像展示：过滤掉种子版本标记；「数据说明」放到脚注
-  const profileEntries = Object.entries(profile).filter(([k]) => k !== DEMO_MARKER_KEY && k !== '数据说明')
-  const profileNote = profile['数据说明'] as string | undefined
+  // 注意：profile 每个 entry 是 { key, value, confidence, source, updated_at } 对象，不是纯字符串
+  const profileEntries = Object.entries(profile)
+    .filter(([k]) => k !== DEMO_MARKER_KEY && k !== '数据说明')
+    .map(([k, entry]) => [k, entry?.value ?? '', entry?.confidence] as const)
+  const profileNote = (typeof profile['数据说明'] === 'object' ? profile['数据说明']?.value : profile['数据说明']) as string | undefined
 
   const factCats = Array.from(new Set(facts.map((f) => f.category)))
   const filteredFacts = factFilter ? facts.filter((f) => f.category === factFilter) : facts
@@ -180,13 +184,16 @@ export default function MemoryPage() {
               <div className="empty">还没有画像信息。</div>
             ) : (
               <div className="kv-grid">
-                {profileEntries.map(([k, v]) => (
+                {profileEntries.map(([k, v, conf]) => (
                   <div className="kv-card" key={k}>
                     <div className="kv-head">
                       <span className="kv-key">{k}</span>
                       <button className="icon-btn" onClick={() => removeProfile(k)} title="删除">✕</button>
                     </div>
-                    <div className="kv-val">{String(v)}</div>
+                    <div className="kv-val">{v || '—'}</div>
+                    {typeof conf === 'number' && (
+                      <div className="meta">置信度 {Math.round(conf * 100)}%</div>
+                    )}
                   </div>
                 ))}
               </div>

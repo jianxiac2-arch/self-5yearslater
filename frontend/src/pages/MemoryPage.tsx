@@ -4,6 +4,7 @@ import {
   listFacts, addFact, deleteFact,
   listPreferences, addPreference, deletePreference,
   listEpisodes, listReflections, listFrameworks,
+  getMetaInfo,
 } from '../api'
 
 type ProfileEntry = { key: string; value: string; confidence?: number; source?: string; updated_at?: string }
@@ -47,6 +48,13 @@ const DEMO_MARKER_KEY = '_demo_seed_version'
 export default function MemoryPage() {
   // 当前分层
   const [layer, setLayer] = useState<LayerKey>('profile')
+  const [caseDisplayName, setCaseDisplayName] = useState<string>('')
+
+  useEffect(() => {
+    getMetaInfo()
+      .then((m) => setCaseDisplayName(m.demo_case_display_name || ''))
+      .catch(() => {})
+  }, [])
 
   // L1 画像
   const [profile, setProfileState] = useState<Profile>({})
@@ -148,7 +156,9 @@ export default function MemoryPage() {
       <header className="page-head">
         <h1 className="page-title">记忆库</h1>
         <p className="page-sub">
-          演示人格「小林」（虚构）的分层记忆 · L4 事件由对话自动产生，L5 反思可在「搜索总结」页生成
+          {caseDisplayName
+            ? `当前演示 Case「${caseDisplayName}」的分层记忆 · L4 事件由对话自动产生，L5 反思可在「搜索总结」页生成`
+            : '分层记忆库 · L4 事件由对话自动产生，L5 反思可在「搜索总结」页生成'}
         </p>
       </header>
 

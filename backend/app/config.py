@@ -40,8 +40,11 @@ class Settings(BaseSettings):
     # 访问口令：设为非空后，所有 /api 请求（除 /api/auth/status）需带 X-Access-Code 头。
     # 本地开发留空即不启用。
     access_code: str = ""
-    # 演示数据：设为 true 时，启动种子脚本会写入半虚拟演示人格（公网 demo 用）。
+    # 演示数据：设为 true 时，启动种子脚本会写入演示用 Case（历史人物虚拟用户）。
     seed_demo_data: bool = False
+    # 演示用哪个 Case：watson_1920（默认，华生 1920 年被开除）/ chanel_1953（香奈儿 70 岁复出）
+    # 可用环境变量 DEMO_CASE 切换。对应 seed.py 的 CASE_REGISTRY。
+    demo_case: str = "watson_1920"
 
     model_config = SettingsConfigDict(
         env_file=".env",

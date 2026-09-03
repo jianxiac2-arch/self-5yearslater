@@ -59,6 +59,11 @@ export async function resetDemoData() {
   return r.json();
 }
 
+export async function getMetaInfo() {
+  const r = await apiFetch(`${BASE}/meta/info`);
+  return r.json();
+}
+
 // ===== 对话（SSE 流式） =====
 
 export async function chatStream(

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import ChatPage from './pages/ChatPage'
 import MemoryPage from './pages/MemoryPage'
 import SearchPage from './pages/SearchPage'
-import { authStatusRequired, getAccessCode, setAccessCode, listConversations } from './api'
+import { authStatusRequired, getAccessCode, setAccessCode, getMetaInfo } from './api'
 
 type Tab = 'chat' | 'memory' | 'search'
 
@@ -86,7 +86,7 @@ function AccessGate({ onPass }: { onPass: () => void }) {
           5 年后的我
         </div>
         <p className="gate-desc">
-          这是一个演示站点，内置虚构演示人格。<br />
+          这是一个演示站点，内置「历史人物虚拟用户」Case。<br />
           输入访问口令进入（口令见项目 README）。
         </p>
         <input
@@ -112,12 +112,17 @@ function App() {
   // null = 启动探测中；false = 无需口令或口令已通过
   const [needAuth, setNeedAuth] = useState<boolean | null>(null)
   const [authed, setAuthed] = useState(false)
+  const [demoCaseName, setDemoCaseName] = useState<string>('')
 
   useEffect(() => {
     authStatusRequired()
       .then((required) => {
         setNeedAuth(required)
-        if (!required || getAccessCode()) setAuthed(true)
+        if (!required || getAccessCode()) {
+          setAuthed(true)
+          // 通过后异步拉 case 名（不阻塞）
+          getMetaInfo().then((m) => setDemoCaseName(m.demo_case_display_name || '')).catch(() => {})
+        }
       })
       .catch(() => {
         // 探测失败（如本地未起后端）不挡 UI
@@ -169,7 +174,7 @@ function App() {
         </nav>
         <div className="sidebar-foot">
           <span className="demo-dot" />
-          演示站点 · 内置虚构人格
+          {demoCaseName ? `演示 Case · ${demoCaseName}` : '演示站点 · 内置历史人物 Case'}
         </div>
       </aside>
 

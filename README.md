@@ -156,7 +156,7 @@ System prompt 的核心规则：
 |----------|-----------|
 | Agent 的性格/语气/立场 | `backend/app/prompts/system.py` |
 | 思维工具/视角内容 | `backend/app/prompts/frameworks.py` |
-| 演示人格内容 | `backend/app/seed.py`（`DEMO_PROFILE` / `DEMO_FACTS`） |
+| 演示 Case 内容（历史人物虚拟用户） | `backend/app/seed.py`（`CASE_WATSON_1920` / `CASE_CHANEL_1953`） |
 | 浅绿主题颜色 | `frontend/src/index.css` 顶部 CSS 变量 |
 | 模型/API Key/访问口令/演示开关 | `backend/.env`（`ACCESS_CODE`、`SEED_DEMO_DATA`） |
 
@@ -164,7 +164,7 @@ System prompt 的核心规则：
 
 - **存储**：所有记忆数据（SQLite + ChromaDB）存储在本地或你自己的服务器（Docker/Railway Volume 持久化），不经过任何第三方数据库
 - **推理**：对话推理调用云端大模型 API（如 DeepSeek），组装上下文时必要的画像/事实会发送至模型服务商；生产环境 embedding 同样可走 API
-- **公网演示**：部署到公网时通过 `ACCESS_CODE` 环境变量设置访问口令，防止陌生人盗用 API 额度或读写记忆库；`SEED_DEMO_DATA=true` 时使用虚构演示人格，不含真实隐私
+- **公网演示**：部署到公网时通过 `ACCESS_CODE` 环境变量设置访问口令，防止陌生人盗用 API 额度或读写记忆库；`SEED_DEMO_DATA=true` 时使用历史人物演示 Case，不含真实隐私（默认华生·1920，可通过 `DEMO_CASE` 环境变量切换）
 
 ## 📄 License
 

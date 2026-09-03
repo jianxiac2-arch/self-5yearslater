@@ -266,9 +266,10 @@ def seed_demo_data(force: bool = False) -> int:
     for ptype, content, importance in case["preferences"]:
         memory.add_preference(ptype=ptype, content=content, importance=importance)
 
-    # L5：反思
-    for rtype, content in case["reflections"]:
-        memory.add_reflection(rtype=rtype, content=content)
+    # L5：反思（每条三元组：type, content, _importance_unused —— 保持与 facts/preferences 同样的 3 元组形式
+    # 但 add_reflection 只接受前两元，后面 importance 只是注释不入库，避免 ValueError: too many values to unpack (expected 2)
+    for entry in case["reflections"]:
+        memory.add_reflection(rtype=entry[0], content=entry[1])
 
     logger.info(
         "演示数据已写入 [%s]：%d 条画像，%d 条事实，%d 条偏好，%d 条反思。",

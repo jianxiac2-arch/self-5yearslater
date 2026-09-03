@@ -62,7 +62,9 @@ class _APIEmbeddingFunction:
         return self._call(input if isinstance(input, list) else [input])
 
     def embed_query(self, input):
-        return self._call([input])[0]
+        # chromadb 1.5.x 协议：embed_query 需返回 Embeddings（批量向量，与 __call__ 相同结构），
+        # 返回单个向量会导致 query 时 TypeError: 'float' object cannot be converted to 'Sequence'
+        return self._call(input if isinstance(input, list) else [input])
 
     def embed_documents(self, input):
         return self._call(input)

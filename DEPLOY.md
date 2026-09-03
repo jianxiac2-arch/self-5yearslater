@@ -38,9 +38,9 @@
 DEEPSEEK_API_KEY            你的 deepseek API key
 DEEPSEEK_BASE_URL           https://api.deepseek.com
 CHAT_MODEL                  deepseek-chat
-EMBEDDING_API_URL           https://api.deepseek.com/v1/embeddings
-EMBEDDING_API_KEY           你的 deepseek API key
-EMBEDDING_API_MODEL         text-embedding-v1
+EMBEDDING_API_URL           https://api.siliconflow.cn/v1/embeddings
+EMBEDDING_API_KEY           你的硅基流动 API key（注意：DeepSeek 不提供 embedding，需单独在 siliconflow.cn 注册申请，免费额度即可）
+EMBEDDING_API_MODEL         BAAI/bge-m3
 DB_PATH                     /data/memory.db
 CHROMA_PATH                 /data/chroma
 FRONTEND_ORIGIN             https://你的vercel域名.vercel.app
@@ -105,6 +105,53 @@ dist/assets/index-CvZ46_a_.js   204.02 kB
 
 ---
 
+## 二B、备选：Render 免费层部署后端（不想用 Railway 时）
+
+Railway 已无永久免费层；Render 免费层（2026 年仍提供）可长期使用：512MB RAM / 0.1 vCPU、750 实例小时/月（单服务 24/7 = 744h，刚好够）、500 构建分钟/月、5GB 带宽/月。
+
+### 1. 创建 Web Service
+
+1. 注册 https://render.com （GitHub OAuth 登录）并授权访问仓库
+2. Dashboard → **New + → Web Service** → 选仓库
+3. 配置：
+   - **Root Directory**: `backend`
+   - **Runtime**: Python 3
+   - **Build Command**: `pip install -r requirements.txt`（无 torch，构建快）
+   - **Start Command**: `python -m app.seed && uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+   - **Instance Type**: Free
+
+### 2. 环境变量
+
+与 Railway 清单基本一致，**不设 DB_PATH / CHROMA_PATH**（免费层无持久盘，用容器内临时目录）：
+
+```
+PYTHON_VERSION              3.12.6
+DEEPSEEK_API_KEY            你的 deepseek API key
+DEEPSEEK_BASE_URL           https://api.deepseek.com
+CHAT_MODEL                  deepseek-chat
+EMBEDDING_API_URL           https://api.siliconflow.cn/v1/embeddings
+EMBEDDING_API_KEY           你的硅基流动 API key（注意：DeepSeek 不提供 embedding，需单独在 siliconflow.cn 注册申请，免费额度即可）
+EMBEDDING_API_MODEL         BAAI/bge-m3
+FRONTEND_ORIGIN             https://你的vercel域名.vercel.app
+ACCESS_CODE                 你设定的访问口令
+SEED_DEMO_DATA              true
+```
+
+### 3. 免费层的两个特性与应对
+
+| 特性 | 影响 | 应对 |
+|---|---|---|
+| 15 分钟无流量休眠，冷启动约 1 分钟 | 评审首次打开慢 | cron-job.org（免费）每 14 分钟 ping 一次 `https://xxx.onrender.com/health` 保活；744 < 750h，单服务 24/7 不超限 |
+| 临时文件系统（重启丢文件） | 访客聊天记录、数据库不持久 | `SEED_DEMO_DATA=true` 使每次启动自动重建框架 + 演示人格——等于自动恢复演示状态，正是 demo 需要的行为 |
+
+### 4. 验证
+
+访问 `https://你的服务名.onrender.com/health` 应返回 `{"status":"ok"}`。前端 Vercel 配置不变（`VITE_API_BASE=https://你的服务名.onrender.com/api`）。
+
+> 若 Render 注册要求绑定支付方式而你不便绑定：备选 Koyeb（koyeb.com，免费 web service 一个，GitHub 部署，无需信用卡），步骤同上、界面不同。
+
+---
+
 ## 三、验证
 
 1. 访问 Vercel 前端 URL，应出现访问口令页；输入 `ACCESS_CODE` 后进入
@@ -132,7 +179,7 @@ dist/assets/index-CvZ46_a_.js   204.02 kB
 |------|------|------|
 | 前端空白/404 | Root Directory 没设对 | Vercel 设置 Root Directory 为 `frontend` |
 | 后端启动失败 | DeepSeek API Key 未配置 | Railway Variables 添加 `DEEPSEEK_API_KEY` |
-| Embedding 报错 | EMBEDDING_API_URL 未设置 | Railway Variables 添加 |
+| Embedding 报错 | DeepSeek 不提供 embedding 服务 | 用硅基流动（siliconflow.cn，OpenAI 兼容）申请 key，设 EMBEDDING_API_URL / EMBEDDING_API_KEY / EMBEDDING_API_MODEL 三项 |
 | CORS 错误 | FRONTEND_ORIGIN 未更新 | Railway 更新后 Redeploy |
 | 数据丢失 | 未挂载 Volume | Railway Storage 挂载 `/data` |
 | 首条对话慢 | ChromaDB 首次初始化 | 正常，后续会快 |

@@ -41,6 +41,12 @@ class _APIEmbeddingFunction:
             json=payload,
             timeout=30,
         )
+        if resp.status_code >= 400:
+            # 打印响应体，避免 raise_for_status 吞掉服务端的错误详情
+            logger.error(
+                "Embedding API failed: HTTP %s, model=%s, url=%s, response=%s",
+                resp.status_code, self._model, self._api_url, resp.text[:300],
+            )
         resp.raise_for_status()
         data = resp.json()
 

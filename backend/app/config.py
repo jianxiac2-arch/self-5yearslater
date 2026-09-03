@@ -20,12 +20,13 @@ class Settings(BaseSettings):
     chat_model: str = "deepseek-chat"
 
     # --- Embedding ---
-    # 生产环境：用 DeepSeek Embedding API（免本地模型，同 API Key）
+    # 生产环境：用硅基流动（siliconflow.cn，OpenAI 兼容）的 embedding API。
+    # 注意：DeepSeek 不提供 embedding 服务。
     # 开发环境：不设则用本地 BGE-small-zh（首次启动自动下载）
     embedding_model: str = "BAAI/bge-small-zh-v1.5"
-    embedding_api_url: str = ""  # 设为 https://api.deepseek.com/v1/embeddings 即用 API
-    embedding_api_key: str = ""  # DeepSeek API Key（同 LLM key）
-    embedding_api_model: str = "text-embedding-v1"  # DeepSeek embedding 模型名
+    embedding_api_url: str = ""  # 设为 https://api.siliconflow.cn/v1/embeddings 即用 API
+    embedding_api_key: str = ""  # 硅基流动 API key（与 LLM key 不同）
+    embedding_api_model: str = "BAAI/bge-m3"
 
     # --- 路径 ---
     db_path: str = str(DB_PATH)

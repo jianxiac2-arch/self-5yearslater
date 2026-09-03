@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import ChatPage from './pages/ChatPage'
 import MemoryPage from './pages/MemoryPage'
 import SearchPage from './pages/SearchPage'
-import { authStatusRequired, getAccessCode, setAccessCode, getMetaInfo } from './api'
+import { authStatusRequired, getAccessCode, setAccessCode, getMetaInfo, listConversations } from './api'
 
 type Tab = 'chat' | 'memory' | 'search'
 

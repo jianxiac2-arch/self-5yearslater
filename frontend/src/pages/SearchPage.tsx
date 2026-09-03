@@ -82,12 +82,18 @@ export default function SearchPage() {
 
   return (
     <div className="manage-page">
-      <h1 className="page-title">元认知：搜索与总结</h1>
+      <header className="page-head">
+        <h1 className="page-title">搜索总结</h1>
+        <p className="page-sub">元认知能力：跨层语义搜索 + 按维度总结记忆</p>
+      </header>
 
       {/* 搜索 */}
       <section className="section">
-        <div className="section-title">语义搜索记忆</div>
-        <div className="row">
+        <div className="section-title">
+          语义搜索
+          <span className="section-hint">搜你说过的话、记录的事</span>
+        </div>
+        <div className="add-form">
           <input
             placeholder="搜索你说过的话、记录的事…"
             value={query}
@@ -98,28 +104,29 @@ export default function SearchPage() {
             {searching ? '搜索中…' : '搜索'}
           </button>
         </div>
-        <div className="row" style={{ flexWrap: 'wrap' }}>
+        <div className="filter-chips">
           {LAYERS.map((l) => (
-            <label key={l.key} style={{ display: 'flex', gap: 4, alignItems: 'center', fontSize: 13 }}>
-              <input
-                type="checkbox"
-                checked={selectedLayers.includes(l.key)}
-                onChange={() => toggleLayer(l.key)}
-              />
+            <button
+              key={l.key}
+              className={`f-chip ${selectedLayers.includes(l.key) ? 'active' : ''}`}
+              onClick={() => toggleLayer(l.key)}
+            >
               {l.label}
-            </label>
+            </button>
           ))}
-          <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>不选则搜全部层</span>
+          <span className="chip-hint">不选则搜全部层</span>
         </div>
         {searched && (
           hits.length === 0 ? (
             <div className="empty">没有找到相关记忆。</div>
           ) : (
             hits.map((h, i) => (
-              <div className="list-item" key={i}>
-                <div className="content">
-                  <span className="tag">{layerLabel[h.layer] || h.layer}</span>
-                  {h.content}
+              <div className="card" key={i}>
+                <div className="card-main">
+                  <div className="card-top">
+                    <span className="tag">{layerLabel[h.layer] || h.layer}</span>
+                  </div>
+                  <div className="card-content">{h.content}</div>
                   {h.score != null && <div className="meta">相似度 {h.score.toFixed(3)}</div>}
                 </div>
               </div>
@@ -130,27 +137,33 @@ export default function SearchPage() {
 
       {/* 总结 */}
       <section className="section">
-        <div className="section-title">总结记忆</div>
-        <div className="row">
-          <select value={dim} onChange={(e) => setDim(e.target.value)} style={{ flex: '0 0 120px' }}>
+        <div className="section-title">
+          总结记忆
+          <span className="section-hint">按维度回顾，可存为反思</span>
+        </div>
+        <div className="add-form">
+          <select value={dim} onChange={(e) => setDim(e.target.value)} className="select-dim">
             {DIMENSIONS.map((d) => <option key={d.key} value={d.key}>{d.label}</option>)}
           </select>
           <input
             placeholder={currentDim.placeholder}
             value={dimVal}
             onChange={(e) => setDimVal(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && doSummarize()}
           />
           <button className="btn" onClick={doSummarize} disabled={summarizing || !dimVal.trim()}>
             {summarizing ? '总结中…' : '总结'}
           </button>
         </div>
-        <label style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 13, color: 'var(--color-text-secondary)' }}>
+        <label className="check-row">
           <input type="checkbox" checked={saveReflection} onChange={(e) => setSaveReflection(e.target.checked)} />
           存为反思（L5）
         </label>
         {summary && (
-          <div className="list-item">
-            <div className="content" style={{ whiteSpace: 'pre-wrap' }}>{summary}</div>
+          <div className="card">
+            <div className="card-main">
+              <div className="card-content" style={{ whiteSpace: 'pre-wrap' }}>{summary}</div>
+            </div>
           </div>
         )}
       </section>

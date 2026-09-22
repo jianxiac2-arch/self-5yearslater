@@ -20,6 +20,47 @@ MAX_REFLECTIONS = 3
 MAX_EPISODES = 3
 MAX_FRAMEWORKS = 3
 
+# 相似度阈值：score = 1 - cosine_distance，低于此值不注入（避免硬塞低相关记忆）
+MIN_RELEVANCE_SCORE = 0.42
+
+# 闲聊识别关键词：消息含这些词或纯短句时，跳过 L2/L4/L5/L6 检索，只注入 L1 画像
+_CASUAL_PATTERNS = [
+    "吃什么", "今天吃", "晚饭", "午饭", "早饭", "想吃什么",
+    "几点了", "天气", "你好", "在吗", "哈喽", "嗨",
+    "晚安", "早安", "拜拜", "再见",
+    "谢谢", "感谢", "辛苦",
+]
+
+
+def _is_casual(message: str) -> bool:
+    """判断是否是闲聊/日常问题——这类问题不需要检索历史记忆。
+
+    判断规则：
+    1. 消息很短（< 12 字）且不含决策/纠结关键词
+    2. 命中闲聊关键词模式
+    3. 不含"我该不该 / 怎么办 / 纠结 / 选择"等深度决策信号
+    """
+    msg = message.strip()
+    if not msg:
+        return True
+    # 决策/纠结信号 → 不是闲聊
+    deep_signals = ["怎么办", "该不该", "该不该", "纠结", "选择", "决定", "要不要", "职业", "工作",
+                   "转行", "辞职", "分手", "结婚", "事业", "未来", "方向", "迷茫", "焦虑"]
+    if any(s in msg for s in deep_signals):
+        return False
+    # 命中闲聊关键词
+    if any(p in msg for p in _CASUAL_PATTERNS):
+        return True
+    # 短消息且不含深度信号 → 闲聊
+    if len(msg) < 12:
+        return True
+    return False
+
+
+def _filter_relevant(hits: list[dict], min_score: float = MIN_RELEVANCE_SCORE) -> list[dict]:
+    """过滤低相关度的检索结果。score 字段来自 1 - cosine_distance。"""
+    return [h for h in hits if h.get("score") is not None and h["score"] >= min_score]
+
 
 def chat_stream(
     conversation_id: Optional[str],
@@ -117,22 +158,31 @@ def blind_analyze(system_prompt: str, user_message: str) -> dict:
 
 
 def build_context(conversation_id: str, user_message: str) -> list[dict]:
-    """组装发送给 LLM 的 messages：system + 记忆 + 框架 + 历史。"""
+    """组装发送给 LLM 的 messages：system + 记忆 + 框架 + 历史。
+
+    优化（防止"硬塞记忆"）：
+    1. 闲聊识别——日常问题只注入 L1 画像，跳过 L2/L4/L5/L6 检索
+    2. 相似度阈值——非闲聊也只注入 score >= MIN_RELEVANCE_SCORE 的高相关结果
+    """
     system = SYSTEM_PROMPT
 
-    # L1 用户画像
+    # L1 用户画像（始终注入——基础身份信息）
     profile = memory.get_profile()
     if profile:
         profile_text = "\n".join(f"- {k}: {v['value']}" for k, v in profile.items())
         system += f"\n\n# 用户画像\n{profile_text}"
 
-    # L2 相关关键事实
-    facts = memory.search_facts(user_message, n=MAX_FACTS)
-    if facts:
-        facts_text = "\n".join(f"- {f['content']}" for f in facts)
-        system += f"\n\n# 相关记忆（关键事实）\n{facts_text}"
+    # 闲聊短路：日常问题（"今晚吃什么"等）跳过深度检索
+    is_casual = _is_casual(user_message)
+    if is_casual:
+        logger.info("识别为闲聊，跳过 L2/L4/L5/L6 检索: %s", user_message[:30])
+        messages: list[dict] = [{"role": "system", "content": system}]
+        history = memory.list_messages(conversation_id, limit=MAX_RECENT_TURNS * 2)
+        for m in history:
+            messages.append({"role": m["role"], "content": m["content"]})
+        return messages
 
-    # L3 偏好（思维偏好、决策风格、禁忌）
+    # L3 偏好（始终注入——用于建议落地性检验，量小不影响）
     preferences = memory.list_preferences()
     if preferences:
         pref_lines = []
@@ -141,24 +191,30 @@ def build_context(conversation_id: str, user_message: str) -> list[dict]:
             pref_lines.append(f"- [{label}] {p['content']}")
         system += "\n\n# 用户偏好（用于建议落地性检验，不要硬塞给用户）\n" + "\n".join(pref_lines)
 
-    # L5 反思（模式/趋势/盲点——5 年视角的核心知识来源）
-    reflections = memory.search_reflections(user_message, n=MAX_REFLECTIONS)
+    # L2 相关关键事实（加相似度过滤）
+    facts = _filter_relevant(memory.search_facts(user_message, n=MAX_FACTS))
+    if facts:
+        facts_text = "\n".join(f"- {f['content']}" for f in facts)
+        system += f"\n\n# 相关记忆（关键事实，仅高相关）\n{facts_text}"
+
+    # L5 反思（模式/趋势/盲点——5 年视角的核心知识来源，加相似度过滤）
+    reflections = _filter_relevant(memory.search_reflections(user_message, n=MAX_REFLECTIONS))
     if reflections:
         ref_lines = []
         for r in reflections:
             rtype = r.get("metadata", {}).get("type", "reflection")
             type_label = {"pattern": "模式", "trend": "趋势", "blindspot": "盲点", "change": "变化"}.get(rtype, rtype)
             ref_lines.append(f"- [{type_label}] {r['content']}")
-        system += "\n\n# 深层反思（用户自己的模式/趋势/盲点，作为 5 年视角的推演依据）\n" + "\n".join(ref_lines)
+        system += "\n\n# 深层反思（用户自己的模式/趋势/盲点，仅高相关，作为 5 年视角的推演依据）\n" + "\n".join(ref_lines)
 
-    # L4 相关过往事件
-    episodes = memory.search_episodes(user_message, n=MAX_EPISODES)
+    # L4 相关过往事件（加相似度过滤）
+    episodes = _filter_relevant(memory.search_episodes(user_message, n=MAX_EPISODES))
     if episodes:
         ep_text = "\n".join(f"- {e['content']}" for e in episodes)
-        system += f"\n\n# 相关过往事件\n{ep_text}"
+        system += f"\n\n# 相关过往事件（仅高相关）\n{ep_text}"
 
-    # L6 认知框架（作为思考工具注入）
-    frameworks = memory.search_frameworks(user_message, n=MAX_FRAMEWORKS)
+    # L6 认知框架（作为思考工具注入，加相似度过滤）
+    frameworks = _filter_relevant(memory.search_frameworks(user_message, n=MAX_FRAMEWORKS))
     if frameworks:
         fw_lines = []
         for f in frameworks:
@@ -166,7 +222,7 @@ def build_context(conversation_id: str, user_message: str) -> list[dict]:
             fw_lines.append(f"【{name}】{f['content']}")
         system += "\n\n# 可调用的认知框架（作为思考工具使用，不要背诵给用户）\n" + "\n".join(fw_lines)
 
-    messages: list[dict] = [{"role": "system", "content": system}]
+    messages = [{"role": "system", "content": system}]
 
     # 对话历史（已包含刚存的当前 user message）
     history = memory.list_messages(conversation_id, limit=MAX_RECENT_TURNS * 2)

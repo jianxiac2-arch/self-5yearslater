@@ -297,12 +297,30 @@ def search_all(query: str, layers: Optional[list] = None, n_per_layer: int = 5) 
 
 
 def _query_collection(collection_name: str, query: str, n: int, layer: str) -> list[dict]:
+    """混合检索：向量检索（ChromaDB）+ 关键词匹配（char 2-gram），RRF 融合。
+
+    参考 MemPalace Hybrid v4 的思路：纯向量检索在词面命中但语义不近的场景会漏召回
+    （如用户问"我父亲怎么办"召回不到"父亲抛弃家庭"），加关键词匹配做兜底。
+    """
     coll = get_collection(collection_name)
-    res = coll.query(query_texts=[query], n_results=n)
-    return _format_results(res, layer)
+    # 向量检索多召回一些（n*3），再做关键词重排
+    res = coll.query(query_texts=[query], n_results=max(n * 3, n))
+    hits = _format_results(res, layer)
+    # 关键词重排：用 char 2-gram 计算词面重叠，RRF 融合
+    query_ngrams = _char_ngrams(query)
+    for h in hits:
+        kw_score = _ngram_overlap(query_ngrams, h.get("content", ""))
+        # RRF 融合：向量权重 0.6，关键词权重 0.4
+        vec_score = h.get("score") or 0
+        h["score"] = 0.6 * vec_score + 0.4 * kw_score
+        h["kw_score"] = kw_score
+    # 按融合分排序，截断到 n
+    hits.sort(key=lambda x: x.get("score", 0), reverse=True)
+    return hits[:n]
 
 
 def _format_results(res: dict, layer: str) -> list[dict]:
+    """把 ChromaDB 原始返回格式化成统一结构（向量检索的原始 score）。"""
     hits = []
     if not res.get("ids") or not res["ids"][0]:
         return hits
@@ -319,6 +337,25 @@ def _format_results(res: dict, layer: str) -> list[dict]:
             "metadata": metas[i] if i < len(metas) else {},
         })
     return hits
+
+
+def _char_ngrams(text: str, n: int = 2) -> set:
+    """中文 char-level n-gram 分词（不需要 jieba，标准库实现）。"""
+    text = text.replace(" ", "").replace("\n", "")
+    if len(text) < n:
+        return {text}
+    return {text[i:i+n] for i in range(len(text) - n + 1)}
+
+
+def _ngram_overlap(query_grams: set, content: str) -> float:
+    """计算 query n-gram 在 content 中的命中率（0-1）。"""
+    if not query_grams or not content:
+        return 0.0
+    content_grams = _char_ngrams(content)
+    if not content_grams:
+        return 0.0
+    hit = len(query_grams & content_grams)
+    return hit / len(query_grams)
 
 
 # ===== 对话记录 =====

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { chatStream, resetDemoData } from '../api'
+import { chatStream, resetDemoData, getMessages } from '../api'
 
 type Msg = { role: 'user' | 'ai'; content: string }
 
@@ -13,18 +13,43 @@ const SUGGESTED = [
   '所有人都走了同一条路，只有我想反着来，我是不是太倔了？',
 ]
 
+const STORAGE_KEY = 'counterpart_last_conv_id'
+
 export default function ChatPage() {
   const [messages, setMessages] = useState<Msg[]>([])
   const [input, setInput] = useState('')
   const [convId, setConvId] = useState<string | null>(null)
   const [streaming, setStreaming] = useState(false)
   const [resetting, setResetting] = useState(false)
+  const [loadingHistory, setLoadingHistory] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  // 进入页面时从 localStorage 拉上次对话历史（修复刷新即丢的硬伤）
+  useEffect(() => {
+    const lastId = localStorage.getItem(STORAGE_KEY)
+    if (!lastId) return
+    setLoadingHistory(true)
+    getMessages(lastId)
+      .then((msgs) => {
+        if (msgs && msgs.length > 0) {
+          setMessages(msgs.map((m: { role: string; content: string }) => ({
+            role: m.role === 'assistant' ? 'ai' : 'user',
+            content: m.content,
+          })))
+          setConvId(lastId)
+        }
+      })
+      .catch(() => {
+        // 历史拉取失败（对话可能被重置清掉了），清掉本地缓存
+        localStorage.removeItem(STORAGE_KEY)
+      })
+      .finally(() => setLoadingHistory(false))
+  }, [])
 
   const send = async (preset?: string) => {
     const text = (preset ?? input).trim()
@@ -46,7 +71,10 @@ export default function ChatPage() {
             return next
           })
         },
-        (id) => setConvId(id),
+        (id) => {
+          setConvId(id)
+          localStorage.setItem(STORAGE_KEY, id)
+        },
       )
     } catch (e) {
       setMessages((prev) => {
@@ -75,6 +103,7 @@ export default function ChatPage() {
     setResetting(true)
     try {
       await resetDemoData()
+      localStorage.removeItem(STORAGE_KEY)
       window.location.reload()
     } catch {
       alert('重置失败：本实例可能未启用演示数据')
@@ -87,7 +116,11 @@ export default function ChatPage() {
       <div className="chat-messages">
         {messages.length === 0 && (
           <div className="empty-hint">
-            <h2>和 Counterpart 聊聊</h2>
+            {loadingHistory ? (
+              <p style={{ color: '#888' }}>加载上次对话历史中…</p>
+            ) : (
+              <h2>和 Counterpart 聊聊</h2>
+            )}
             <p>这里不是附和你的对话框，是<strong>和你相似但更成熟的那一个</strong>。</p>
 
             <div className="demo-notice">

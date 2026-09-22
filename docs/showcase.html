@@ -337,12 +337,12 @@
 
   <!-- Hero -->
   <div class="hero">
-    <h1>5 Years Later</h1>
-    <div class="tagline">AI 连麦博主 · 为你提供"5 年后成熟自己"的视角</div>
+    <h1>Counterpart</h1>
+    <div class="tagline">同行者 · 和你相似但更成熟的那一个</div>
     <div class="def">
-      对标求职/婚恋连麦博主：当你面临职业或关系的重大困惑时，给你一个<strong>不讨好、有确定性、有认知深度</strong>的成熟视角。<br>
-      <strong>核心洞察：</strong>AI 其实具备这些能力，但容易被用户的情绪和施压带偏。本产品解决的就是"让 AI 稳定保持连麦博主的态度"——而非泛泛地反谄媚。<br>
-      <strong>类比：</strong>AI 心理咨询对标心理咨询 → AI 连麦博主对标连麦博主。
+      不是导师说教，不是 ChatBot 附和——它是<strong>和你相似但更成熟的那一个</strong>：给你 5 年后视角的对照判断，不被你的提示词带偏，也不为附和而附和。<br>
+      <strong>核心洞察：</strong>AI 其实具备"成熟同行者"的能力（态度/确定性/认知），唯一问题是<strong>容易被用户带偏</strong>。Counterpart 解决的就是"让 AI 稳定保持成熟同行者的视角"——而非泛泛地反谄媚。<br>
+      <strong>灵感来源：</strong>求职/婚恋连麦博主 → AI 心理咨询对标心理咨询 → AI 同行者对标现实成熟同行者。
     </div>
     <div class="metrics">
       <div class="metric"><div class="num">6</div><div class="label">分层记忆库 L1-L6</div></div>
@@ -354,7 +354,7 @@
 
   <!-- 1. 需求痛点 -->
   <div class="section">
-    <div class="section-title"><span class="num">1</span> 需求痛点：年轻人为什么需要一个"AI 连麦博主"</div>
+    <div class="section-title"><span class="num">1</span> 需求痛点：年轻人为什么需要一个 Counterpart</div>
     <div class="pain-grid">
       <div class="pain-card">
         <div class="icon">🎭</div>
@@ -378,15 +378,15 @@
 
     <!-- 核心洞察：AI 有能力但做不好 -->
     <div class="why-block">
-      <h4>💡 核心洞察：AI 其实具备连麦博主的能力，但做不好<span class="badge">产品本质</span></h4>
-      <p>连麦博主的差异化优势是<strong>态度、确定性、认知</strong>——这三点 AI 都有。问题不是"AI 没有"，而是"<strong>AI 容易被用户的提示词带偏，丢掉这些能力</strong>"：</p>
+      <h4>💡 核心洞察：AI 其实具备成熟同行者的能力，但做不好<span class="badge">产品本质</span></h4>
+      <p>成熟同行者的差异化优势是<strong>态度、确定性、认知</strong>——这三点 AI 都有。问题不是"AI 没有"，而是"<strong>AI 容易被用户的提示词带偏，丢掉这些能力</strong>"：</p>
       <ul>
-        <li><strong>态度</strong>：博主不讨好 → AI 被 RLHF 训成讨好型人格，用户一施压就倒</li>
-        <li><strong>确定性</strong>：博主给明确判断 → AI 习惯骑墙，怕说错不敢站队</li>
-        <li><strong>认知</strong>：博主有行业深度 → AI 有知识但缺经验沉淀，建议泛化</li>
-        <li><strong>不被带偏</strong>：博主面对哭惨/狡辩坚持判断 → AI 一被提示就附和</li>
+        <li><strong>态度</strong>：成熟同行者不讨好 → AI 被 RLHF 训成讨好型人格，用户一施压就倒</li>
+        <li><strong>确定性</strong>：成熟同行者给明确判断 → AI 习惯骑墙，怕说错不敢站队</li>
+        <li><strong>认知</strong>：成熟同行者有行业深度 → AI 有知识但缺经验沉淀，建议泛化</li>
+        <li><strong>不被带偏</strong>：成熟同行者面对哭惨/狡辩坚持判断 → AI 一被提示就附和</li>
       </ul>
-      <p style="margin-top:12px;"><span class="highlight">所以本产品的本质不是"反谄媚"（太抽象），而是"让 AI 稳定保持连麦博主的态度/确定性/认知，不被用户带偏"。</span>反谄媚只是其中一个手段。</p>
+      <p style="margin-top:12px;"><span class="highlight">所以本产品的本质不是"反谄媚"（太抽象），而是"让 AI 稳定保持成熟同行者的态度/确定性/认知，不被用户带偏"。</span>反谄媚只是其中一个手段。</p>
     </div>
 
     <!-- Why: 大模型公司为什么没解决 -->
@@ -487,9 +487,9 @@
 
     <!-- 博主能力 → 技术实现映射 -->
     <div class="layer-reason" style="margin-top:16px;">
-      <h5>🎯 连麦博主能力 → 技术实现映射</h5>
+      <h5>🎯 成熟同行者能力 → 技术实现映射</h5>
       <table>
-        <thead><tr><th>连麦博主的差异化优势</th><th>对应技术实现</th><th>解决的问题</th></tr></thead>
+        <thead><tr><th>成熟同行者的差异化优势</th><th>对应技术实现</th><th>解决的问题</th></tr></thead>
         <tbody>
           <tr><td><strong>态度</strong>（不讨好）</td><td>盲评双调用 Call#1 独立判断</td><td>先剥离用户立场，避免被情绪带偏</td></tr>
           <tr><td><strong>确定性</strong>（不骑墙）</td><td>Casebank 监控 stance 分布</td><td>量化验证是否给了明确判断</td></tr>

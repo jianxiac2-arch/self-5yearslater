@@ -38,8 +38,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="5 Years Later",
-    description="个人 Agent：分层记忆库 + 认知框架层 + 反谄媚推理",
+    title="Counterpart",
+    description="个人 Agent：分层记忆库 + 认知框架层 + 防带偏推理",
     version="0.1.0",
     lifespan=lifespan,
 )

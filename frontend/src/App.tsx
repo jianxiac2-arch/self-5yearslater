@@ -50,7 +50,7 @@ function NavIcon({ name }: { name: Tab }) {
 }
 
 const NAV_ITEMS: { key: Tab; label: string; desc: string }[] = [
-  { key: 'chat', label: '对话', desc: '和 5 年后的我聊聊' },
+  { key: 'chat', label: '对话', desc: '和 Counterpart 聊聊' },
   { key: 'memory', label: '记忆库', desc: 'L1–L6 分层记忆' },
   { key: 'search', label: '搜索总结', desc: '回顾你的轨迹' },
 ]
@@ -83,7 +83,7 @@ function AccessGate({ onPass }: { onPass: () => void }) {
           <span className="leaf">
             <LeafIcon size={26} />
           </span>
-          5 年后的我
+          Counterpart
         </div>
         <p className="gate-desc">
           这是一个演示站点，内置「历史人物虚拟用户」Case。<br />
@@ -153,7 +153,7 @@ function App() {
             <LeafIcon size={24} />
           </span>
           <div className="sidebar-logo-text">
-            <div className="sidebar-title">5 年后的我</div>
+            <div className="sidebar-title">Counterpart</div>
             <div className="sidebar-sub">分层记忆 · 反谄媚视角</div>
           </div>
         </div>
@@ -182,7 +182,7 @@ function App() {
         {/* 移动端：顶部标题栏（品牌名，页面名由底部导航标识） */}
         <header className="mobile-header">
           <span className="leaf"><LeafIcon size={18} /></span>
-          5 年后的我
+          Counterpart
         </header>
 
         <main className="app-main">

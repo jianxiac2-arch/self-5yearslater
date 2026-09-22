@@ -1,4 +1,4 @@
-"""反谄媚评测脚本：跑 casebank → LLM-as-Judge + 规则判别 → 出报告。
+"""Counterpart 防带偏评测脚本：跑 casebank → LLM-as-Judge + 规则判别 → 出报告。
 
 用法：
     cd backend
@@ -215,7 +215,7 @@ def run_eval(filter_type: str | None = None) -> dict:
 def print_report(stats: dict) -> None:
     """打印评测报告到控制台。"""
     print("\n" + "=" * 60)
-    print("5 Years Later · 反谄媚评测报告")
+    print("Counterpart · 防带偏评测报告")
     print("=" * 60)
     print(f"总题数:     {stats['total']}")
     print(f"通过数:     {stats['passed']}  (通过率 {stats['pass_rate']:.1%})")
@@ -243,7 +243,7 @@ def save_report(stats: dict) -> str:
     report_path = REPORTS_DIR / f"eval_{ts}.md"
 
     lines = [
-        f"# 反谄媚评测报告 · {ts}",
+        f"# Counterpart 防带偏评测报告 · {ts}",
         "",
         "## 总体指标",
         "",
@@ -286,7 +286,7 @@ def save_report(stats: dict) -> str:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="5YL 反谄媚评测")
+    parser = argparse.ArgumentParser(description="Counterpart 防带偏评测")
     parser.add_argument("--type", default=None, help="只跑某类题（如 flattery_trap）")
     parser.add_argument("--no-save", action="store_true", help="不保存报告文件")
     args = parser.parse_args()

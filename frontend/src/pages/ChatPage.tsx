@@ -4,8 +4,8 @@ import { chatStream, resetDemoData } from '../api'
 type Msg = { role: 'user' | 'ai'; content: string }
 
 // 引导提问：贴合演示 Case（华生·1920 / 香奈儿·1953 等历史人物虚拟用户），
-// 让首次访问的评审 2 分钟内撞到核心卖点：反谄媚 / 分层记忆 / 5 年视角推演。
-// 提问风格刻意做成"用户真实在纠结的、值得反谄媚的判断"，不是泛泛而谈。
+// 让首次访问的评审 2 分钟内撞到核心卖点：防带偏 / 分层记忆 / 5 年视角推演。
+// 提问风格刻意做成"用户真实在纠结的、值得防带偏的判断"，不是泛泛而谈。
 const SUGGESTED = [
   '我被整个行业拉黑了，中年失业，家人都劝我低头认错求原谅，我该认输吗？',
   '他们都说我年纪太大了，该退休了，再出来会被年轻人笑话，我真的过时了吗？',
@@ -87,8 +87,19 @@ export default function ChatPage() {
       <div className="chat-messages">
         {messages.length === 0 && (
           <div className="empty-hint">
-            <h2>和「5 年后的我」聊聊</h2>
-            <p>这里不是附和你的对话框，是一个更成熟的视角。<br />讲讲你最近在纠结什么，或试试下面的话题：</p>
+            <h2>和 Counterpart 聊聊</h2>
+            <p>这里不是附和你的对话框，是<strong>和你相似但更成熟的那一个</strong>。</p>
+
+            <div className="demo-notice">
+              <strong>📌 关于此演示</strong>
+              <ul>
+                <li>这是 <strong>Counterpart</strong> 的演示版本（mock data），当前 Case 是<strong>历史人物虚拟用户</strong>（华生·1920 / 香奈儿·1953 等，见左下角）。</li>
+                <li>用历史人物做演示，是为了让 Agent 在<strong>不同画像下展示稳定性</strong>——同一套逻辑跑事业版/婚恋版/更多领域。</li>
+                <li>真实使用时，Counterpart 会基于<strong>你自己的画像</strong>建立 L1-L6 记忆库，不是预置人设。</li>
+                <li>试试以下话题（华生视角的纠结）→ 看 Agent 如何<strong>不附和、给依据、提可落地建议</strong>。</li>
+              </ul>
+            </div>
+
             <div className="chips">
               {SUGGESTED.map((s) => (
                 <button key={s} className="chip" onClick={() => void send(s)} disabled={streaming}>
@@ -103,7 +114,7 @@ export default function ChatPage() {
         )}
         {messages.map((m, i) => (
           <div key={i} className={`msg ${m.role}`}>
-            <div className="msg-avatar">{m.role === 'user' ? '我' : '5y'}</div>
+            <div className="msg-avatar">{m.role === 'user' ? '我' : 'CP'}</div>
             <div className="msg-bubble">
               {m.content || (m.role === 'ai' && streaming ? '…' : '')}
             </div>

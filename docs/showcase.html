@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5 Years Later · 个人决策 Agent 设计文档</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #181b24;
+    --surface-2: #1f2330;
+    --border: #2a2f3d;
+    --text: #e4e7ef;
+    --text-dim: #8b91a3;
+    --accent: #4ade80;
+    --accent-2: #60a5fa;
+    --accent-3: #f472b6;
+    --warn: #fbbf24;
+    --danger: #f87171;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 14px;
+    padding: 32px 24px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  .page { page-break-after: always; }
+  .page:last-child { page-break-after: auto; }
+
+  .hero {
+    background: linear-gradient(135deg, #1a2332 0%, #0f1117 100%);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 40px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -50%; right: -10%;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(74,222,128,0.08) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .hero h1 {
+    font-size: 36px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .hero .tagline { font-size: 18px; color: var(--text-dim); margin-bottom: 24px; }
+  .hero .def {
+    font-size: 16px;
+    background: var(--surface-2);
+    border-left: 3px solid var(--accent);
+    padding: 16px 20px;
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 24px;
+  }
+  .hero .def strong { color: var(--accent); }
+  .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; position: relative; z-index: 1; }
+  .metric {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+  }
+  .metric .num { font-size: 28px; font-weight: 700; color: var(--accent); }
+  .metric .label { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    margin-bottom: 24px;
+  }
+  .section-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-title .num {
+    width: 28px; height: 28px;
+    background: var(--accent);
+    color: var(--bg);
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .section-sub {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+    padding-left: 38px;
+  }
+
+  .pain-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .pain-card {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px;
+  }
+  .pain-card .icon { font-size: 24px; margin-bottom: 8px; }
+  .pain-card h4 { font-size: 15px; margin-bottom: 8px; color: var(--danger); }
+  .pain-card .cause { font-size: 12px; color: var(--text-dim); margin-bottom: 10px; }
+  .pain-card .fix { font-size: 13px; color: var(--accent); }
+  .pain-card .fix::before { content: "→ "; }
+
+  .why-block {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 16px;
+  }
+  .why-block h4 {
+    font-size: 15px;
+    margin-bottom: 12px;
+    color: var(--accent-2);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .why-block h4 .badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--bg);
+    color: var(--accent);
+    font-weight: 500;
+  }
+  .why-block p { font-size: 13px; color: var(--text); margin-bottom: 10px; }
+  .why-block ul { list-style: none; font-size: 13px; }
+  .why-block li { padding: 5px 0 5px 16px; position: relative; color: var(--text); }
+  .why-block li::before { content: "▸"; position: absolute; left: 0; color: var(--accent); }
+  .why-block li strong { color: var(--text); }
+  .why-block .highlight { color: var(--accent); font-weight: 600; }
+  .why-block .danger-text { color: var(--danger); }
+
+  .persona-card {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+  }
+  .persona-card h4 { font-size: 15px; color: var(--accent-3); margin-bottom: 12px; }
+  .persona-card .trait {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .persona-card .trait:last-child { border-bottom: none; }
+  .persona-card .trait .k { color: var(--text-dim); }
+
+  .layers { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .layer {
+    display: grid;
+    grid-template-columns: 50px 90px 1fr 100px;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 14px;
+  }
+  .layer .lv { font-weight: 700; color: var(--accent); font-size: 16px; }
+  .layer .name { font-weight: 600; }
+  .layer .desc { font-size: 12px; color: var(--text-dim); }
+  .layer .store {
+    font-size: 11px;
+    text-align: center;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: var(--bg);
+    color: var(--accent-2);
+  }
+
+  .layer-reason {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-top: 12px;
+  }
+  .layer-reason h5 { font-size: 13px; color: var(--accent-3); margin-bottom: 8px; }
+  .layer-reason table { width: 100%; font-size: 12px; }
+  .layer-reason th, .layer-reason td { padding: 6px 8px; text-align: left; }
+  .layer-reason th { background: var(--bg); color: var(--text-dim); font-size: 11px; }
+
+  .flow { display: grid; grid-template-columns: 1fr 50px 1fr; gap: 12px; align-items: stretch; }
+  .flow-step {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .flow-step.call1 { border-top: 3px solid var(--accent-2); }
+  .flow-step.call2 { border-top: 3px solid var(--accent); }
+  .flow-step h4 { margin-bottom: 10px; font-size: 14px; }
+  .flow-step .tag {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--bg);
+    margin-bottom: 8px;
+  }
+  .flow-step.call1 .tag { color: var(--accent-2); }
+  .flow-step.call2 .tag { color: var(--accent); }
+  .flow-step ul { list-style: none; font-size: 12px; color: var(--text-dim); }
+  .flow-step li { margin-bottom: 4px; padding-left: 12px; position: relative; }
+  .flow-step li::before { content: "▸"; position: absolute; left: 0; color: var(--text-dim); }
+  .flow-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-dim);
+    font-size: 24px;
+  }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+  th {
+    background: var(--surface-2);
+    font-weight: 600;
+    color: var(--text-dim);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  tr:hover td { background: var(--surface-2); }
+
+  .case-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .case-card {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px;
+  }
+  .case-card h4 { font-size: 16px; margin-bottom: 12px; color: var(--accent-2); }
+  .case-card .attr {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .case-card .attr:last-child { border-bottom: none; }
+  .case-card .attr .k { color: var(--text-dim); }
+  .case-card .attr .v { font-weight: 500; }
+
+  .eval-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+  .eval-metric {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px;
+    text-align: center;
+  }
+  .eval-metric .val { font-size: 22px; font-weight: 700; }
+  .eval-metric.good .val { color: var(--accent); }
+  .eval-metric.warn .val { color: var(--warn); }
+  .eval-metric .name { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+
+  .signal-detection {
+    display: grid;
+    grid-template-columns: 80px 1fr 1fr;
+    gap: 2px;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+  .sd-cell { padding: 10px; text-align: center; font-size: 12px; background: var(--surface-2); }
+  .sd-cell.head { background: var(--bg); color: var(--text-dim); font-weight: 600; }
+  .sd-cell.fn { background: rgba(248,113,113,0.15); color: var(--danger); }
+  .sd-cell.fp { background: rgba(251,191,36,0.15); color: var(--warn); }
+  .sd-cell.tn { background: rgba(74,222,128,0.15); color: var(--accent); }
+
+  .case-types { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 16px; }
+  .case-type {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px;
+    text-align: center;
+    font-size: 12px;
+  }
+  .case-type .cn { font-weight: 600; color: var(--accent-2); }
+  .case-type .en { color: var(--text-dim); font-size: 10px; margin-top: 2px; }
+
+  .tech-list { list-style: none; }
+  .tech-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .tech-list li:last-child { border-bottom: none; }
+  .tech-list .why { color: var(--text-dim); font-size: 12px; max-width: 60%; }
+
+  .footer {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 12px;
+    padding: 20px;
+    margin-top: 20px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== PAGE 1 ==================== -->
+<div class="page">
+
+  <!-- Hero -->
+  <div class="hero">
+    <h1>5 Years Later</h1>
+    <div class="tagline">AI 连麦博主 · 为你提供"5 年后成熟自己"的视角</div>
+    <div class="def">
+      对标求职/婚恋连麦博主：当你面临职业或关系的重大困惑时，给你一个<strong>不讨好、有确定性、有认知深度</strong>的成熟视角。<br>
+      <strong>核心洞察：</strong>AI 其实具备这些能力，但容易被用户的情绪和施压带偏。本产品解决的就是"让 AI 稳定保持连麦博主的态度"——而非泛泛地反谄媚。<br>
+      <strong>类比：</strong>AI 心理咨询对标心理咨询 → AI 连麦博主对标连麦博主。
+    </div>
+    <div class="metrics">
+      <div class="metric"><div class="num">6</div><div class="label">分层记忆库 L1-L6</div></div>
+      <div class="metric"><div class="num">2×</div><div class="label">盲评双调用（防带偏）</div></div>
+      <div class="metric"><div class="num">20</div><div class="label">Casebank 评测题项</div></div>
+      <div class="metric"><div class="num">N</div><div class="label">领域可扩展（事业/婚恋）</div></div>
+    </div>
+  </div>
+
+  <!-- 1. 需求痛点 -->
+  <div class="section">
+    <div class="section-title"><span class="num">1</span> 需求痛点：年轻人为什么需要一个"AI 连麦博主"</div>
+    <div class="pain-grid">
+      <div class="pain-card">
+        <div class="icon">🎭</div>
+        <h4>AI 容易被带偏</h4>
+        <div class="cause">用户一哭惨/施压/反复纠缠，AI 就开始附和骑墙</div>
+        <div class="fix">盲评双调用：先独立判断再对比表达</div>
+      </div>
+      <div class="pain-card">
+        <div class="icon">🎢</div>
+        <h4>AI 习惯骑墙</h4>
+        <div class="cause">"一方面...另一方面..."，不给明确判断</div>
+        <div class="fix">Casebank 监控 stance 分布，强制确定性</div>
+      </div>
+      <div class="pain-card">
+        <div class="icon">📚</div>
+        <h4>AI 缺行业认知</h4>
+        <div class="cause">有知识但缺"行业经验沉淀"，建议泛化</div>
+        <div class="fix">L6 认知框架层注入领域博主思维库</div>
+      </div>
+    </div>
+
+    <!-- 核心洞察：AI 有能力但做不好 -->
+    <div class="why-block">
+      <h4>💡 核心洞察：AI 其实具备连麦博主的能力，但做不好<span class="badge">产品本质</span></h4>
+      <p>连麦博主的差异化优势是<strong>态度、确定性、认知</strong>——这三点 AI 都有。问题不是"AI 没有"，而是"<strong>AI 容易被用户的提示词带偏，丢掉这些能力</strong>"：</p>
+      <ul>
+        <li><strong>态度</strong>：博主不讨好 → AI 被 RLHF 训成讨好型人格，用户一施压就倒</li>
+        <li><strong>确定性</strong>：博主给明确判断 → AI 习惯骑墙，怕说错不敢站队</li>
+        <li><strong>认知</strong>：博主有行业深度 → AI 有知识但缺经验沉淀，建议泛化</li>
+        <li><strong>不被带偏</strong>：博主面对哭惨/狡辩坚持判断 → AI 一被提示就附和</li>
+      </ul>
+      <p style="margin-top:12px;"><span class="highlight">所以本产品的本质不是"反谄媚"（太抽象），而是"让 AI 稳定保持连麦博主的态度/确定性/认知，不被用户带偏"。</span>反谄媚只是其中一个手段。</p>
+    </div>
+
+    <!-- Why: 大模型公司为什么没解决 -->
+    <div class="why-block">
+      <h4>🤔 为什么大模型公司没解决"AI 被带偏"？<span class="badge">核心论证</span></h4>
+      <p><strong>根因是 RLHF 训练目标 + 产品定位的双重约束：</strong></p>
+      <ul>
+        <li><strong>Reward Model 本身就在奖励"被带偏"</strong>。人类标注员面对用户的情绪诉求时，倾向给"附和+安慰"的回答更高分——这是社会赞许性偏差。用这种数据训练的 reward model，必然奖励 AI 顺着用户说。</li>
+        <li><strong>切换模型反而加剧</strong>：模型越强，越擅长"读空气"判断用户想听什么，被带偏的概率越高。这是能力的副作用。</li>
+        <li><strong>Benchmark 测不到"被带偏"</strong>：benchmark 是静态问答，测不到真实对话中"用户施压→AI 倒戈"的动态过程。</li>
+      </ul>
+      <p style="margin-top:12px;"><span class="highlight">根本原因是产品定位：</span>通用产品服务亿级用户，优化目标是"最大化用户满意度"。AI 坚持判断→用户不爽→留存下降；AI 顺着说→至少不生气。<span class="danger-text">通用产品永远无法把"不被带偏"权重拉满。</span></p>
+    </div>
+
+    <!-- Why: 我凭什么能解决 -->
+    <div class="why-block">
+      <h4>💡 我凭什么能解决？能解决到什么程度？<span class="badge">差异化</span></h4>
+      <p><strong>不是技术更强，是约束条件更少 + 产品定位不同：</strong></p>
+      <ul>
+        <li><strong>单用户/小众场景的权衡反转</strong>：通用产品 1 亿用户 × 不被带偏权重 0.3；本产品目标用户是"想听真话的人"，权重可以拉到 1.0。</li>
+        <li><strong>分层记忆让"不被带偏"有依据</strong>：通用产品没有你的长期记忆，AI 只能给泛化建议，更容易被用户具体情绪带偏；我有 L1-L6 记忆，可以基于"你这个人的真实处境"坚持判断。</li>
+        <li><strong>盲评双调用工程实现</strong>：大模型公司不是做不到，是不能做——双调用成本翻倍，亿级用户扛不住；小众场景成本可接受。</li>
+        <li><strong>L6 框架注入行业认知</strong>：通用 AI 只有泛化知识，我可以把求职博主/婚恋博主的思维框架结构化注入，让 AI 有"行业经验沉淀"。</li>
+      </ul>
+      <p style="margin-top:12px;"><strong>诚实边界：</strong>❌ 不能让 AI 100% 不被带偏（那需要改 RLHF）；✅ 能把"关键决策场景下被带偏"的概率压到很低；✅ 能量化验证（Casebank 跑施压题，看 AI 倒戈率）。</p>
+    </div>
+  </div>
+
+  <!-- 2. 目标用户 -->
+  <div class="section">
+    <div class="section-title"><span class="num">2</span> 目标用户：想听"成熟人真话"的年轻人</div>
+    <div class="grid-2">
+      <div class="persona-card">
+        <h4>✅ 谁适合用</h4>
+        <div class="trait"><span class="k">画像</span><span>22-30 岁，职业/关系关键期</span></div>
+        <div class="trait"><span class="k">核心诉求</span><span>想听真话 > 想被安慰</span></div>
+        <div class="trait"><span class="k">行为特征</span><span>刷求职/婚恋连麦博主</span></div>
+        <div class="trait"><span class="k">痛点</span><span>博主回复不及时/要排队/要付费</span></div>
+        <div class="trait"><span class="k">使用方式</span><span>重大决策前来聊 10 分钟</span></div>
+      </div>
+      <div class="persona-card">
+        <h4>❌ 谁不适合用</h4>
+        <div class="trait"><span class="k">想要的是</span><span>被理解、被安慰、被认同</span></div>
+        <div class="trait"><span class="k">期待</span><span>AI 永远站在我这边</span></div>
+        <div class="trait"><span class="k">场景</span><span>日常闲聊 / 情绪宣泄</span></div>
+        <div class="trait"><span class="k">→ 请用</span><span>ChatGPT / Claude / Pi</span></div>
+      </div>
+    </div>
+
+    <!-- 可扩展性：不是只服务我一个人 -->
+    <div class="why-block" style="margin-top:16px;">
+      <h4>🚀 可扩展性：不是只服务我，是服务"一类人"<span class="badge">产品价值</span></h4>
+      <p><strong>核心架构复用，L6 框架库按领域切换：</strong></p>
+      <ul>
+        <li><strong>事业版</strong>：L6 注入职场/创业博主的认知框架（长期主义、机会成本、行业周期判断、职业路径规划）</li>
+        <li><strong>婚恋版</strong>：L6 注入婚恋博主的认知框架（关系边界、沉没成本、人格匹配、沟通模式）</li>
+        <li><strong>未来版</strong>：教育、理财、健康……每个领域只需要换 L6 思维库 + Casebank 题项</li>
+      </ul>
+      <p style="margin-top:10px;"><span class="highlight">共享层</span>：盲评双调用（防带偏）+ 分层记忆（个人化）+ Casebank 评测（量化验证）——这三层是所有领域版本的通用底座。</p>
+      <p style="margin-top:10px;">每个用户部署自己的实例，记忆完全隔离——<strong>隐私也是卖点</strong>。冷启动靠 L1 画像访谈（3-5 轮），长期靠对话自动提取 L2/L4/L5，越用越了解你。</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- ==================== PAGE 2 ==================== -->
+<div class="page">
+
+  <!-- 3. 分层记忆 + Why 6 层 -->
+  <div class="section">
+    <div class="section-title"><span class="num">3</span> 核心架构：分层记忆库 L1-L6</div>
+    <div class="layers">
+      <div class="layer"><span class="lv">L1</span><span class="name">用户画像</span><span class="desc">性格、年龄、职业、决策风格——所有建议的落地性约束</span><span class="store">SQLite</span></div>
+      <div class="layer"><span class="lv">L2</span><span class="name">关键事实</span><span class="desc">家庭、职业目标、重要关系、关键经历——持久化事实</span><span class="store">SQLite+向量</span></div>
+      <div class="layer"><span class="lv">L3</span><span class="name">偏好</span><span class="desc">思维偏好、决策风格、禁忌——建议落地性检验</span><span class="store">SQLite</span></div>
+      <div class="layer"><span class="lv">L4</span><span class="name">事件</span><span class="desc">对话自动产生的事件记录——短期记忆</span><span class="store">SQLite+向量</span></div>
+      <div class="layer"><span class="lv">L5</span><span class="name">反思</span><span class="desc">模式/趋势/盲点——5 年视角的核心知识来源（LLM 提炼）</span><span class="store">SQLite+向量</span></div>
+      <div class="layer"><span class="lv">L6</span><span class="name">认知框架</span><span class="desc">领域博主思维库 + 决策框架——AI 的"行业经验沉淀"（事业版/婚恋版切换）</span><span class="store">向量</span></div>
+    </div>
+
+    <div class="layer-reason">
+      <h5>🧠 为什么是 6 层而不是 3/4/2 层？——按"信息类型 × 对决策的作用"分的最小完备集</h5>
+      <table>
+        <thead><tr><th>层</th><th>为什么不能省 / 不能合并</th></tr></thead>
+        <tbody>
+          <tr><td><strong>L1 画像</strong></td><td>没有画像→建议是"正确的废话"（所有人都该努力，但内向的人该怎么努力？）</td></tr>
+          <tr><td><strong>L2 事实</strong></td><td>没有事实→每次从零开始，无法积累</td></tr>
+          <tr><td><strong>L3 偏好</strong></td><td>偏好≠事实。"做销售5年"是事实，"讨厌社交"是偏好。给内向者建议"多社交"就是没看偏好</td></tr>
+          <tr><td><strong>L4 事件</strong></td><td>事件≠事实。事件临时、权重低；事实持久、重要</td></tr>
+          <tr><td><strong style="color:var(--accent);">L5 反思</strong></td><td><strong style="color:var(--accent);">灵魂层</strong>。不是"你说了什么"，而是"你反复做了什么"——模式/趋势/盲点。没反思，5年视角就是空话</td></tr>
+          <tr><td><strong>L6 框架</strong></td><td>框架≠用户记忆。记忆是纵向的（你的历史），框架是横向的（领域博主的思维工具）。没 L6→AI 只有泛化知识，缺行业认知，建议正确但没用</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:12px;color:var(--text-dim);margin-top:10px;">
+        分 2 层（事实/框架）→ 丢画像+反思 → 不落地、没5年视角；分 4 层（画像/事实/事件/框架）→ 丢偏好+反思 → 不适配决策风格、没跨事件洞察；分 5 层（丢 L5）→ 5年视角没知识来源，退化为"拉长时间的当下视角"。<strong>6 层是少一层缺一个关键能力、多一层冗余的最小完备集。</strong>
+      </p>
+    </div>
+
+    <!-- 博主能力 → 技术实现映射 -->
+    <div class="layer-reason" style="margin-top:16px;">
+      <h5>🎯 连麦博主能力 → 技术实现映射</h5>
+      <table>
+        <thead><tr><th>连麦博主的差异化优势</th><th>对应技术实现</th><th>解决的问题</th></tr></thead>
+        <tbody>
+          <tr><td><strong>态度</strong>（不讨好）</td><td>盲评双调用 Call#1 独立判断</td><td>先剥离用户立场，避免被情绪带偏</td></tr>
+          <tr><td><strong>确定性</strong>（不骑墙）</td><td>Casebank 监控 stance 分布</td><td>量化验证是否给了明确判断</td></tr>
+          <tr><td><strong>认知</strong>（行业深度）</td><td>L6 认知框架层（领域博主思维库）</td><td>注入职场/婚恋领域的成熟认知</td></tr>
+          <tr><td><strong>不被带偏</strong>（坚持判断）</td><td>盲评双调用 + 记忆约束</td><td>独立判断优先于用户情绪</td></tr>
+          <tr><td><strong>个人化建议</strong>（懂你）</td><td>L1-L5 分层记忆</td><td>基于"你这个人"的处境给建议</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 4. 防带偏推理：盲评双调用 -->
+  <div class="section">
+    <div class="section-title"><span class="num">4</span> 防带偏推理：盲评双调用（Double-Blind Call）</div>
+    <p style="font-size:13px;color:var(--text-dim);margin-bottom:16px;">
+      <strong>核心洞察：</strong>单次调用中用户观点与问题同屏出现，RLHF 模型的"独立分析"会退化为事后合理化——用户一施压，AI 就倒。<span class="highlight">prompt 指导语是最弱的干预</span>——你要求模型"坚持判断"，但它的训练目标就是顺着用户说。
+    </p>
+    <div class="flow">
+      <div class="flow-step call1">
+        <div class="tag">Call #1 · 盲</div>
+        <h4>中立改写 + 独立判断</h4>
+        <ul>
+          <li>剥掉用户立场与情绪</li>
+          <li>模型看不到"该附和谁"</li>
+          <li>输出：{stance, conclusion, confidence, assumptions}</li>
+          <li>低温度（0.3），求稳</li>
+        </ul>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step call2">
+        <div class="tag">Call #2 · 明</div>
+        <h4>对比表达 + 流式输出</h4>
+        <ul>
+          <li>注入 Call #1 的独立结论</li>
+          <li>对比用户原始观点</li>
+          <li>先立场 → 再理由 → 后建议</li>
+          <li>正常温度（0.7），流式</li>
+        </ul>
+      </div>
+    </div>
+    <p style="font-size:12px;color:var(--accent);margin-top:14px;">
+      <strong>情绪支持与观点挑战分离：</strong>情绪宣泄场景下，Call #1 应输出"此时挑战观点=冷漠"，允许 stance 与安慰性表达共存——成熟导师的特征是"支持人、挑战事"。
+    </p>
+  </div>
+
+</div>
+
+<!-- ==================== PAGE 3 ==================== -->
+<div class="page">
+
+  <!-- 5. 技术选型与取舍 -->
+  <div class="section">
+    <div class="section-title"><span class="num">5</span> 技术选型与取舍</div>
+    <div class="grid-2">
+      <div>
+        <table>
+          <thead><tr><th>层</th><th>选型</th><th>理由</th></tr></thead>
+          <tbody>
+            <tr><td>后端</td><td>FastAPI + Python 3.12</td><td>LLM 生态成熟，SSE 流式友好</td></tr>
+            <tr><td>前端</td><td>React 19 + Vite + TS</td><td>轻量，无需全栈框架</td></tr>
+            <tr><td>向量库</td><td>ChromaDB</td><td>嵌入式零运维，本地优先</td></tr>
+            <tr><td>结构化</td><td>SQLite</td><td>单用户场景免运维</td></tr>
+            <tr><td>LLM</td><td>DeepSeek API</td><td>成本低 + 中文好 + 国内可访问</td></tr>
+            <tr><td>Embedding</td><td>BGE-small-zh / BGE-m3</td><td>本地免费，隐私优先</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h4 style="font-size:14px;margin-bottom:10px;color:var(--accent-3);">关键取舍（为什么不选 X）</h4>
+        <ul class="tech-list">
+          <li><span>不用 Postgres</span><span class="why">单用户场景 SQLite 够，免运维</span></li>
+          <li><span>不用 Pinecone</span><span class="why">ChromaDB 嵌入式零成本，本地优先</span></li>
+          <li><span>不用 LangChain</span><span class="why">业务复杂度不需要，裸写更可控</span></li>
+          <li><span>不用 GPT-4</span><span class="why">DeepSeek 成本更低，中文更适配</span></li>
+          <li><span>不用角色扮演</span><span class="why">认知框架层比人设更稳定可复用</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. 演示 Case -->
+  <div class="section">
+    <div class="section-title"><span class="num">6</span> 演示 Case：同一套 Agent 逻辑 × 两种完全不同的用户画像</div>
+    <p style="font-size:12px;color:var(--text-dim);margin-bottom:16px;">
+      用历史人物做"虚拟用户"（不是人设），验证同一套通用决策层在不同画像上的差异化表现。<strong>诚实声明：演示数据为历史人物，非真实用户数据。</strong>
+    </p>
+    <div class="case-compare">
+      <div class="case-card">
+        <h4>华生 · 1920</h4>
+        <div class="attr"><span class="k">年龄</span><span class="v">42 岁</span></div>
+        <div class="attr"><span class="k">行业</span><span class="v">学术/大学教职</span></div>
+        <div class="attr"><span class="k">时代</span><span class="v">1920 年代</span></div>
+        <div class="attr"><span class="k">困境</span><span class="v">被行业封杀 + 中年失业 + 名誉崩塌</span></div>
+        <div class="attr"><span class="k">决策风格</span><span class="v">极端果断 / 高风险偏好</span></div>
+      </div>
+      <div class="case-card">
+        <h4>可可·香奈儿 · 1953</h4>
+        <div class="attr"><span class="k">年龄</span><span class="v">70 岁</span></div>
+        <div class="attr"><span class="k">行业</span><span class="v">高级时装/奢侈品</span></div>
+        <div class="attr"><span class="k">时代</span><span class="v">1950 年代</span></div>
+        <div class="attr"><span class="k">困境</span><span class="v">行业集体否定 + 年龄歧视 + 历史污点</span></div>
+        <div class="attr"><span class="k">决策风格</span><span class="v">极度自信 / 逆势操作型</span></div>
+      </div>
+    </div>
+    <p style="font-size:12px;color:var(--accent);margin-top:12px;">
+      <strong>架构说服力：</strong>两个场景用完全一样的通用层代码，只因 Case 层 L1 标签的 7 个字段不同，产出的搜索词、匹配的历史人物、最终回复全部不同。
+    </p>
+  </div>
+
+  <!-- 7. 验收测试 -->
+  <div class="section">
+    <div class="section-title"><span class="num">7</span> 验收测试：防带偏评测体系</div>
+    <p style="font-size:12px;color:var(--text-dim);margin-bottom:14px;">
+      <strong>心理测量学类比：</strong>被带偏 ≈ 社会赞许性偏差；Casebank ≈ 量表；Rubric ≈ 评分标准；回归跑分 ≈ 信度检验。
+    </p>
+    <div class="eval-metrics">
+      <div class="eval-metric good"><div class="val">通过率</div><div class="name">Casebank 整体通过率</div></div>
+      <div class="eval-metric warn"><div class="val">倒戈率</div><div class="name">该坚持却附和（被带偏）</div></div>
+      <div class="eval-metric warn"><div class="val">误报率</div><div class="name">不该反对硬反对（杠精）</div></div>
+      <div class="eval-metric good"><div class="val">Stance 分布</div><div class="name">agree/disagree/uncertain</div></div>
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <h4 style="font-size:14px;margin-bottom:10px;color:var(--accent-3);">信号检测论 2×2</h4>
+        <div class="signal-detection">
+          <div class="sd-cell head"></div>
+          <div class="sd-cell head">期望：反对</div>
+          <div class="sd-cell head">期望：认同</div>
+          <div class="sd-cell head">判定：反对</div>
+          <div class="sd-cell tn">命中 ✓</div>
+          <div class="sd-cell fp">误报 ✗</div>
+          <div class="sd-cell head">判定：认同</div>
+          <div class="sd-cell fn">倒戈 ✗</div>
+          <div class="sd-cell tn">正确否定 ✓</div>
+        </div>
+        <p style="font-size:11px;color:var(--text-dim);margin-top:10px;">
+          <strong>反对率是虚荣指标</strong>——倒戈率（被带偏）和误报率（杠精模拟器）才是真信号。
+        </p>
+      </div>
+      <div>
+        <h4 style="font-size:14px;margin-bottom:10px;color:var(--accent-3);">Casebank 七类题项</h4>
+        <div class="case-types">
+          <div class="case-type"><div class="cn">施压陷阱</div><div class="en">该坚持却附和</div></div>
+          <div class="case-type"><div class="cn">用户正确</div><div class="en">不该反对硬反对</div></div>
+          <div class="case-type"><div class="cn">情绪宣泄</div><div class="en">先承接不硬杠</div></div>
+          <div class="case-type"><div class="cn">事实错误</div><div class="en">不知就说不知道</div></div>
+          <div class="case-type"><div class="cn">落地性</div><div class="en">匹配用户画像</div></div>
+          <div class="case-type"><div class="cn">记忆应用</div><div class="en">正确使用记忆</div></div>
+          <div class="case-type"><div class="cn">权威施压</div><div class="en">坚持诚实判断</div></div>
+          <div class="case-type"><div class="cn">防带偏核心</div><div class="en">明确反对谬误</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8. 实现状态与路线 -->
+  <div class="section">
+    <div class="section-title"><span class="num">8</span> 实现状态与后续路线</div>
+    <div class="grid-2">
+      <div>
+        <h4 style="font-size:14px;margin-bottom:10px;color:var(--accent);">✅ 已落地</h4>
+        <ul style="list-style:none;font-size:13px;">
+          <li style="padding:4px 0;">▸ L1-L6 分层记忆数据结构 + 向量检索</li>
+          <li style="padding:4px 0;">▸ 盲评双调用推理链（Call#1 盲 + Call#2 明）</li>
+          <li style="padding:4px 0;">▸ SSE 流式对话 + 历史记录</li>
+          <li style="padding:4px 0;">▸ 元认知搜索 + 按维度总结</li>
+          <li style="padding:4px 0;">▸ Casebank 20 题 + LLM-as-Judge 评测脚本</li>
+          <li style="padding:4px 0;">▸ 华生/香奈儿双演示 Case + 一键重置</li>
+          <li style="padding:4px 0;">▸ 公网访问口令 + Docker/Render 部署</li>
+        </ul>
+      </div>
+      <div>
+        <h4 style="font-size:14px;margin-bottom:10px;color:var(--accent-2);">🚧 路线图（按 ROI 排序）</h4>
+        <ul style="list-style:none;font-size:13px;">
+          <li style="padding:4px 0;"><strong style="color:var(--accent);">P0</strong> 横向搜索工具层（T1-T5 模板 + 历史类比库）</li>
+          <li style="padding:4px 0;"><strong style="color:var(--accent);">P0</strong> 记忆审核队列（pending 状态，防错误记忆中毒）</li>
+          <li style="padding:4px 0;"><strong style="color:var(--warn);">P1</strong> L6.historical_analogies 历史类比库（20-30 条）</li>
+          <li style="padding:4px 0;"><strong style="color:var(--warn);">P1</strong> Harness 面板（回复来源抽屉 + Trace 视图）</li>
+          <li style="padding:4px 0;"><strong style="color:var(--text-dim);">P2</strong> 本地 Ollama 接入（完全离线）</li>
+          <li style="padding:4px 0;"><strong style="color:var(--text-dim);">P2</strong> 记忆库导出/迁移 + 多设备同步</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    5 Years Later · 个人决策 Agent · 反谄媚 × 元认知 × 分层记忆<br>
+    心理学背景 × 字节风控经验 → 心理测量学评测体系 + RLHF 谄媚事故理解
+  </div>
+
+</div>
+
+</body>
+</html>
